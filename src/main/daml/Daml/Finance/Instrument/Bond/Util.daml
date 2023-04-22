@@ -119,8 +119,12 @@ createCallableBondClaims dateToTime schedule callableSchedule periodicSchedule
           Some fr -> case fr.referenceRateType of
             SingleFixing resetRelativeTo -> rateAfterCapAndFloor
               where
-                baseDate = if resetRelativeTo == CalculationPeriodStartDate
-                  then p.adjustedStartDate else p.adjustedEndDate
+                baseDate =
+                  case (useAdjustedDatesForDcf, resetRelativeTo == CalculationPeriodStartDate) of
+                    (True,  True)  -> p.adjustedStartDate
+                    (True,  False) -> p.adjustedEndDate
+                    (False, True)  -> p.unadjustedStartDate
+                    (False, False) -> p.unadjustedEndDate
                 resetDate = calculateFixingDate baseDate fr.fixingDates fixingCalendars dayShift
                 observedFloatingRate = ObserveAt fr.referenceRateId resetDate
                 rateAfterCapAndFloor = capAndFloorRate observedFloatingRate capRate floorRate dcf
